@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <mete charset="utf-8" />
+  <title>Insert Color System</title>
+
+
+  <!-- 非要在线引用bootstrap.css,否则会有东西显示不出来,解决办法是将整个文件引入进去,但本地引用会出现bug-->
+  <!-- <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css"> -->
+
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename= 'bootstrap-3.3.7-dist/css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename= 'css/jquery-ui-slider-pips.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename= 'css/jqueryui.min.css') }}">
+
+  
+  <script src="{{ url_for('.static', filename='js/jquery-3.3.1.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/jquery-ui.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/decimal.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/jquery-ui-slider-pips.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/spin.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/d3.min.js') }}"></script> -->
+
+
+  <!--在线引用  -->
+  <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename= 'css/jquery-ui-slider-pips.min.css') }}">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.4/themes/flick/jquery-ui.css">
+  
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="{{ url_for('.static', filename='js/decimal.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/jquery-ui-slider-pips.js') }}"></script>
+  
+  <!-- 引入加载动画 -->
+  <script src="{{ url_for('.static', filename='js/spin.min.js') }}"></script>
+  <!-- 引入颜色面板 -->
+  <script src="{{ url_for('.static', filename='js/paigusu.min.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js/farbtastic-1.3.js') }}"></script>
+  <!-- 引入D3 -->
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+
+  <!-- 引入自己写的函数 -->
+  <script src="{{ url_for('.static', filename='js_script/functions.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js_script/DrawAllData.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js_script/DrawScales.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js_script/Drawbins.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js_script/insertColor.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js_script/insert_ColorMap.js') }}"></script>
+  <script src="{{ url_for('.static', filename='js_script/loading-and-slider.js') }}"></script>
+  <!-- 引入自己写的css 样式 -->
+  <link rel="stylesheet" href="{{ url_for('static', filename= 'css/Demo.css') }}">
+
+</head>
+
+<body>
+
+  <div class="container-fluid">
+    <div class="panel panel-default">
+      <h3 style="text-align:center"><strong>Insert Color System</strong></h3>
+      <div class="alert alert-danger" id='alert' style="display:none;" role="alert">
+        Please select a <strong>.txt</strong> file before upload.
+      </div>
+      <div class="alert alert-success" id='tips'
+        style="visibility:hidden;width: 215px;height:45px;margin-top: -50px;margin-left: 10px;" role="alert">
+        Please select a <strong>colormap</strong> ！
+      </div>
+      <div class="row" style="margin-top: -15px;">
+        <div class="col-md-2" style="margin-left: 10px;">
+          <!-- 数据导入选择区-->
+          <div class="input-group" style="margin-bottom: 5px;">
+            <input type="text" id="file_name" class="form-control" οnkeydοwn="return false;" οnpaste="return false;"
+              placeholder="Select .txt file...">
+            <label class="input-group-btn">
+              <span class="btn btn-primary">
+                <i class="glyphicon glyphicon-folder-open"></i>
+                Import<input type="file" id="files" style="display: none;" accept=".txt" multiple>
+              </span>
+            </label>
+          </div>
+
+
+          <!-- colormap选择区 -->
+          <div class="panel panel-default" id="Colormap_Region" style="margin-top: 20px;">
+            <div class="panel-heading " style="text-align:center"><strong>Colormaps</strong></div>
+            <div id='colormap-container'>
+              {% for key in colormap %}
+              <div class='colormap-div'>
+                <canvas width="900" height="1" class="CANVAS" id={{key}} data-scale={{colormap[key]}}></canvas>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- 颜色选择区 -->
+          <div class="panel panel-default" style="height:265px">
+            <div class="panel-heading " id="callback" style="text-align:center"><strong>Color Picker</strong></div>
+            <div id="picker"></div>
+
+          </div>
+        </div>
+        <div class="col-md-10" style="margin-left: -20px;">
+          <!-- 图片显示区 -->
+          <div class="panel panel-default" style="height:510px">
+            <div class="row">
+              <!-- 展示原始图像 -->
+              <div class="col-md-6" style="text-align:center;">
+                <strong>Org Visualization</strong>
+                <div class="panel panel-default">
+                  <div id="org_block" style="display: none;">
+                    <div style="height:450px">
+                      <canvas id="org_img" style="display: none;"></canvas>
+                      <canvas id="org_img_scale" style="margin-top:5px"></canvas>
+                    </div>
+                    <canvas id="org_colormap" width="255" height="1" style="margin-top:5px"></canvas>
+                  </div>
+                </div>
+                <div id="loading-org" style="margin-top: 150px;margin-left:200px;"></div>
+              </div>
+              <!-- 展示新映射图像 -->
+              <div class="col-md-6" style="text-align:center;">
+                <strong>New Visualization</strong>
+                <div class="panel panel-default ">
+                  <div id="new_block" style="display: none;">
+                    <div style="height:450px">
+                      <canvas id="new_img" style="display: none;"></canvas>
+                      <canvas id="new_img_scale" style="margin-top:5px"></canvas>
+                    </div>
+                    <canvas id="new_colormap" width="255" height="1" style="margin-top:5px"></canvas>
+                  </div>
+                </div>
+                <div id="loading-new" style="margin-top: 150px;margin-left:200px;"></div>
+              </div>
+
+
+            </div>
+          </div>
+
+
+
+
+          <!-- 控制区 -->
+          <div class="panel panel-default" id="control" style="height:270px;margin-top: -5px;">
+            <!-- 直方图展示区 -->
+            <div class="col-md-8">
+              <h4 style="float:left;margin-left: 15px;"><strong>Feature Histogram</strong></h4>
+              <div style="margin-left: 15px;height:45px;">
+                <label class="radio-inline" style="margin-top: 30px; margin-left: 50px;">
+                  <input type="radio" name="inlineRadioOptions" id="Data-feature" value="option1" checked><strong>Data
+                    Histogram</strong>
+                </label>
+                <label class="radio-inline" style="margin-top: 30px; margin-left: 150px;">
+                  <input type="radio" name="inlineRadioOptions" id="Boundary-feature" value="option2"><strong>Boundary
+                    Feature</strong>
+                </label>
+              </div>
+
+              <!-- 这里面画bins   -->
+              <div id="svg_body" style=" height:188px;width:800px;float:left;margin-top: 10px;">
+              </div>
+              <!-- 底层的颜色图 -->
+              <canvas width="255" height="1" id="select_colormap"></canvas>
+            </div>
+            <!-- 颜色推荐区 -->
+            <div class="col-md-2">
+              <!-- 这里是控制条  weights——control-->
+              <!-- 其它控制区,对于插入颜色的选取 -->
+              <div style="margin-top:70px;margin-left:-15px;">
+                <!-- <div style="float:left;margin-left:-25px;">
+                  <div id="slider-updown" style="margin-bottom:20px">
+                    <div id="custom-handle-updown" class="ui-slider-handle"></div>
+                  </div>
+                  <span class="glyphicon glyphicon-grain" aria-hidden="true"><strong>Height</strong>
+                  </span>
+                </div> -->
+                
+                <div style="float:left;">
+                  <div id="slider-weight" style="margin-left:25px;margin-bottom:20px">
+                    <div id="custom-handle-weight" class="ui-slider-handle"></div>
+                  </div>
+                  <span class="glyphicon glyphicon-grain" aria-hidden="true"><strong>Color</strong>
+                  </span>
+                </div>
+                
+                <div style="float:left;">
+                  <div id="slider-weight-discrim" style="margin-left:25px;margin-bottom:20px">
+                    <div id="custom-handle-weight-discrim" class="ui-slider-handle"></div>
+                  </div>
+                  <span class="glyphicon glyphicon-grain" aria-hidden="true"
+                    style="margin-left:15px;"><strong>Map</strong>
+                  </span>
+                </div>
+
+
+                <!-- 这里是bins -->
+                <div style="float:left; ">
+                  <div id="slider" style="margin-left: 25px;margin-bottom:20px">
+                    <div id="custom-handle" class="ui-slider-handle"></div>
+                  </div>
+                  <span class="glyphicon glyphicon-stats" aria-hidden="true"
+                    style="margin-left:20px;"><strong>Bins</strong>
+                  </span>
+                </div>
+                <!-- 插入按钮 -->
+
+                <a tabindex="0" class="btn btn-md btn-info" role="button" id="insert"
+                  style="margin-top:15px;margin-left: 10px;" >
+                  <span class="glyphicon glyphicon-indent-left" aria-hidden="true"></span> <strong>Lock
+                    ColorMap</strong>
+                </a>
+              </div>
+              <!-- 历史记录 -->
+
+
+
+
+            </div>
+            <div class="col-md-2 ">
+              <div class="panel panel-default" style="margin-right: -15px;">
+                <div class="panel-heading " style="text-align:center"><strong>History Record</strong></div>
+                <div id='colormap-Record'>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</body>
+
+</html>
+
+
+
+
+<!-- 定义的初始参数 -->
+<script>
+  var W = $(".col-md-6").width() * (3 / 4);//现获取区域的整个宽 ,用来控制生成图像的大小
+
+
+  let min = Number.POSITIVE_INFINITY;//里面放的数传入数据的最小值
+  let max = Number.NEGATIVE_INFINITY;//里面放的是传入数据的最大值
+  let background_color = [255, 255, 255];//对于NaN值的数据给的背景颜色是白色
+  let colormap_id = '';
+  let data = [];//归一化之后的数据
+  let mask = [];//需要
+  let lab = [];//初始化的colormap的lab空间，目前好像并没有用到
+  let rgb = [];//选择的colormap用于绘制初始数据，和相应的插入片段
+  let org_rgb = [];//初始化的colormap的rgb空间，用于绘制初始数据
+  let rgb_colormap = [];//初始的颜色图
+  let bins = 20;//定义的箱子数,默认最小值
+  let AnchorPos = [];//定义初始颜色点的位置
+  let AnchorColor = [];//根据箱子数定义的初始颜色点，保持颜色的一致性
+  let Methods = "Data feature";//选择哪一种方式画直方图,默认值
+  let insert_Bins = [];//选择往哪一个箱子里面插入颜色,还是只能插入一个箱子
+  let insert_Color = [255, 128, 0];//从调色盘中选择插入的颜色,rgb显示，默认黄色
+  let harmony;//参数harmony
+  let Hmymap;//参数Hmymap
+  let History_name = 'HS-';//历史记录的前半部分名字
+  let History_time = 0;//主要记录lock colormap的点击次数
+  let History_lockedmap = [];//里面放入锁定的的colormap
+  let History_orgmap = [];//里面放入原始的的colormap
+
+  //返回的位置参数和需要插入的颜色Insert_color
+  let ColorScale;//返回的是经过特征优化后的colormap的colorscale
+  let temp_colormp = [];//这里面放的是中间态的colormap
+  let temp_colormp_1 = [];//这里面放的是中间态的colormap
+  let locked_colormap = [];//这里面放入的是已经锁定的colormap
+  let new_colormap = [];//这里放的是最新的colormap数组（3X255)
+  let hist_data = [];//这里面存放hist_data直方图数据
+  let Boundary_hist_data = [];//这里面存放Boundary feature 直方图数据
+  let hist_AnchorPos = [];//这里存放的是直方图优化的新位置
+  let Boundary_AnchorPos = [];//这里存放的是Boundary feature优化的新位置
+
+
+  let newAnchorPos = [];//返回新的位置
+  let newAnchorColor = [];//返回新的数据
+
+
+</script>
+
+
+<script>
+ 
+</script>
+
+
+
+
+
+
+
+<!--//insert color这个按钮则是用来生成插入之后的颜色图 ,里面函数需要重新写，因为insert_bins 为数组了需要改-->
+<script>
+
+  // $(function () {
+  //   if (insert_Bins.length == 0) {
+  //     $("#insert").popover();//初始化弹框方式
+  //   }
+  // })
+
+  $("#insert").click(function () {
+    
+      //测试
+      //数据更新
+      locked_colormap = [].concat(new_colormap);
+      temp_colormp = [].concat(new_colormap);
+      temp_colormp_1 = [].concat(new_colormap);
+      insert_Bins = [];//重新置为空
+      drawScale(Methods, locked_colormap, bins);
+
+      History_time++;
+      var History_id = History_name + History_time.toString();
+      //alert(History_id);
+      var temp_locked=[].concat(new_colormap);
+      History_lockedmap.push(temp_locked);//将每一次锁定的map数组存下来
+      var temp_org=[].concat(org_rgb);
+      History_orgmap.push(temp_org);//将每一次对应的原始colormap数组存下来
+
+     // console.log(History_map);
+      //进行动态的创建canvas元素,并设置相应的属性
+      $('<canvas></canvas>').appendTo($('#colormap-Record'))
+      .attr(
+        {
+        id: History_id,
+        name: colormap_id,
+        class: 'colormap_history',
+        width:255,
+        height:1,
+      }
+      );
+      //根据id将锁定的colormap放入历史框中
+      Draw_Colormap(temp_locked,History_id);//这个函数是在function.js里面定义的
+    
+  });
+</script>
+
+<!-- 这里需要判断直方图中哪一个bins被选中 -->
+<script>
+  $("#svg_body").bind("click", function (ev) {
+
+
+    let target = $(ev.target);
+
+    if (target[0].tagName.toLowerCase() == 'rect') {
+      var num = parseInt(target[0].id)//将字符转换为数字，获取bins的id号
+
+      //#region   这里是针对选取多个bins设计的代码
+      //第一步：要先找到这个bins的原始颜色
+      var index = Math.floor(((num - 1) / bins + 1 / bins * 0.5) * 254);
+      var c = new_colormap[index];
+      var r = c[0];
+      var g = c[1];
+      var b = c[2];
+      var fill_c = `rgb(${r},${g},${b})`;
+      //第二步：判断这个bins的fill属性是否为pink
+      if (target.attr("fill") == "pink") {//就将这个颜色变为原来的bins颜色
+        target.attr({
+          "fill": fill_c,
+        });
+        //同时将这个bins的数据从原来的数组出除去
+        var Select_Bins = insert_Bins;
+        Select_Bins.sort(function (a, b) { return a - b }); //从小到大进行排序
+        insert_Bins = [];//再置为空
+        for (var i = 0; i < Select_Bins.length; i++) {
+          if (Select_Bins[i] != num) {//不为该bins数
+            insert_Bins.push(Select_Bins[i]);//重新放进去
+          }
+        }
+      } else {//不为pink颜色，就将它涂成pink颜色，并将bins号存放在数组里
+        insert_Bins.push(num);
+        insert_Bins.sort(function (a, b) { return a - b });//排好序
+        target.attr({
+          "fill": "pink"
+          // "stroke-width":"3",
+          // "stroke":"pink",
+        });
+      }
+      console.log(insert_Bins);
+      //#endregion
+    }
+
+  });
+
+</script>
+
+<script>
+  // 这里写的是调色板的初始化，以及插入颜色的选取 
+
+  $(document).ready(function () {
+    // 初始化插件：
+    $("#picker").farbtastic("#callback", 220);    // jQuery 方法
+    $.farbtastic("#picker", "#callback", 300);    // 对象方法
+
+    // 设置参数：
+    $.farbtastic("#picker").linkTo("#callback");    // 设置回调元素
+    $.farbtastic("#picker").setColor([255, 128, 0]);    // 设置颜色参数
+
+    // 获取属性值：
+    var picker = $.farbtastic("#picker");
+    var color = picker.color;
+    var hsl = picker.hsl;
+    var rgb = picker.rgb;
+    var linked = picker.linked;
+  });
+
+
+</script>
+
+<!-- 这里写的是Boundary Feature和Data Histogram的点击事件 -->
+<script>
+  $("#Data-feature").click(function () {
+
+    if (hist_AnchorPos.length > 0)//为了判断是否有数据导入了
+    {
+
+      
+      draw_mapping(org_rgb);//画原始数据
+      DrawAllData(bins);
+      //将insert_bins数据变成空
+      insert_Bins = [];
+
+    }
+  })
+  $("#Boundary-feature").click(function () {
+    if (hist_AnchorPos.length > 0) {
+      draw_mapping(org_rgb);//画原始数据
+      DrawAllData(bins);
+      //将insert_bins数据变成空
+      insert_Bins = [];
+
+    }
+  })
+</script>
+
+<!-- 这里面是针对历史选择框来进行选择的colormp -->
+<script>
+//#region 给colormap框加上选择标记
+$("#colormap-Record").bind('click', function (ev) {
+  let target = $(ev.target);
+if (target[0].tagName.toLowerCase() == 'canvas') {
+   //给方框加上标记
+   $("#colormap-Record").find("canvas").each(
+            function () {
+              $(this).css({
+                "border": 'none',
+              });
+            });
+
+          // Show selected
+          target.css({
+            "border": '3px solid pink',
+          });
+    //获取该方框的id
+    id_string=target[0].id.slice(3);
+    index=parseInt(id_string)-1;//获取选择的colormap的索引
+    // org_rgb=[].concat(History_orgmap[index]);
+    // new_colormap=[].concat(History_lockedmap[index]);
+    draw_mapping(History_orgmap[index]);
+    draw_new_mapping(History_lockedmap[index]);
+}
+
+  });
+</script>
+
+
+<!-- 这里面写的是加载初始数据以及画相应的colormap -->
+<script>
+
+  //#region 给colormap框加上选择标记
+  $("#colormap-container").bind('click', function (ev) {
+    //判断是否有文件载入
+    let Files = $("#files").prop('files');
+    //alert(Files.length);
+    if (Files.length === 0) {
+      $('#alert').html('Please select a <strong>.txt</strong> file before upload.');
+      $("#alert").show();
+    } else {
+      $("#alert").fadeOut();
+      //将提示退去
+      $("#tips").css(
+        {
+          visibility: 'hidden',
+        }
+      );
+
+      //转换之前要变成空值
+      rgb_colormap = [];
+      rgb = [];
+      lab = [];
+
+
+      let target = $(ev.target);
+
+      if (target[0].tagName.toLowerCase() == 'canvas') {
+        // save id of the colormap
+        colormap_id = target[0].id;
+
+
+
+
+        //接下来是其它步骤，如何映射数据过去
+
+        content = target.attr("data-scale");
+        transContent();//这里是进行rgb，lab计算
+        console.log(rgb_colormap[0]);
+        // console.log(data);
+        console.log(rgb[0].length, rgb.length, lab[0].length, lab.length, data.length, data[0].length);
+
+        console.log(insert_Bins);
+        if (insert_Bins.length == 0) {//没有选择bins，就默认换颜色图
+          org_rgb=[].concat(rgb);
+          //给方框加上标记
+          $("#colormap-container").find("canvas").each(
+            function () {
+              $(this).css({
+                "border": 'none',
+              });
+            });
+
+          // Show selected
+          target.css({
+            "border": '3px solid grey',
+          });
+          //画数据的颜色映射
+          draw_mapping(org_rgb);
+          //设置样式
+          $(" #org_colormap").css({
+            "width": W,
+            "height": "20px"
+          })
+
+
+          //数据都绘制好了，就让加载动画停止，然后显示数据
+          //关闭spinner  
+          spinner.spin();
+          //显示数据
+          $("#org_block").css(
+            {
+              display: "block",
+            }
+          );
+          //隐藏动画属性
+          $("#loading-org").css(
+            {
+              display: "none",
+            }
+          );
+
+          //这里需要让绘制的直方图先隐藏，但还要占用相应的空间
+          $("#svg_body").css(
+            {
+              visibility: 'hidden',
+            }
+          );
+          //根据初始化的bins，画出相应的结果
+          DrawAllData(bins);
+        } else {//否则就将这个colormap插入到bins那一段
+
+          
+          $("#colormap-container").find("canvas").each(
+            function () {
+              $(this).css({
+                "border": 'none',
+              });
+            });
+          // Show selected
+          target.css({
+            "border": '3px solid pink',
+          });
+          //根据rgb_colormap和insert_bins插入替换颜色片段
+          //这里要写个函数
+          insert_ColorMap();
+        }
+      }
+    }
+  });
+  //#endregion
+
+
+
+
+
+
+
+
+  //#region //获取文件名并且显示,和处理数据
+  $('#files').on('change', function () {
+
+    //读取文件
+    var Files = $(this)[0].files;
+    var fileName = '';
+    Object.keys(Files).forEach(item => {
+      fileName = fileName == '' ? `${Files[item].name}` : `${fileName}, ${Files[item].name}`;
+    })
+    //alert(fileName);//获取文件名
+    $("#file_name").attr("placeholder", `${fileName}`);
+
+    //显示之前，数据要变成空值
+    data = [];
+    mask = [];
+
+//历史记录里面的colormap需要清空
+$("canvas").remove(".colormap_history");//移除整个canvas元素
+//清空数值
+History_lockedmap=[];//将每一次锁定的map数组存下来     
+History_orgmap=[];//将每一次对应的原始colormap数组存下来
+History_time = 0;//将lock colormap的点击次数清空
+    //显示数据
+    var file = files.files[0];
+    var reader = new FileReader();
+    reader.readAsText(file, "gb2312");//后面的参数是防止中文乱码 
+
+    reader.onload = function (e) {
+      min = Number.POSITIVE_INFINITY;
+      max = Number.NEGATIVE_INFINITY;
+      data = e.target.result;
+      let res_data = [];
+      res_data = processData(data);//将字符窜数据变成数字//这里面已经获得了最大值最小值了
+      rows = res_data.length;
+      cols = res_data[0].length;
+      let nan_res = [];//里面放入非空值
+      res_data.forEach(i => {
+        let tem_i = [];
+        i.forEach(j => {
+          if (isNaN(j) == true) {
+            tem_i.push(NaN);
+          } else {
+            tem_i.push(1);
+          }
+        })
+        nan_res.push(tem_i);
+      })
+      mask = nan_res;
+      data = res_data;
+      //进行数据归一化
+      for (var i = 0; i < rows; i++)
+        for (var j = 0; j < cols; j++) {
+          if (mask[i][j] != NaN) {
+            data[i][j] = (data[i][j] - min) / (max - min);
+          }
+        }
+
+    }
+
+    //有数据传入，显示加载数据动画
+    //请求时spinner出现
+    //先隐藏画的数据，在显示加载动画
+    //显示数据
+    $("#org_block").css(
+      {
+        display: "none",
+      }
+    );
+
+    //显示动画属性
+    $("#loading-org").css(
+      {
+        display: "block",
+      }
+    );
+    //隐藏选中的colormap
+    $(`#${colormap_id}`).css(
+      {
+        "border": "none",
+      }
+    )
+    //同时还需要隐藏bins直方图
+    //这里需要让绘制的直方图先隐藏，但还要占用相应的空间
+    $("#svg_body").css(
+      {
+        visibility: 'hidden',
+      }
+    );
+
+    var org_loading = $("#loading-org").get(0);
+    spinner.spin(org_loading);
+
+    //可以给出一个提示，让用户选择一个colormap
+    $("#tips").css(
+      {
+        visibility: "visible",
+      }
+    );
+    //同时另一个警告框退去
+    $("#alert").css(
+      {
+        display: "none",
+      }
+    );
+  });
+  //#endregion
+
+  //#region 
+
+
+</script>
+
+<!-- 绘制colormap条 -->
+<script>
+
+  //#region 用canvas画colormap
+
+  [].forEach.call($("#colormap-container")[0].querySelectorAll(".CANVAS"), function (canvas) {
+    let width = canvas.width,
+      context = canvas.getContext("2d"),
+      image = context.createImageData(width, 1),
+      colors = canvas.getAttribute("data-scale").split(",");
+
+    for (let i = 0, j = -1, c, t; i < width; ++i) {
+      c = colors[Math.floor(i / width * colors.length)];
+      image.data[++j] = +("0x" + c.slice(0, 2));
+      image.data[++j] = +("0x" + c.slice(2, 4));
+      image.data[++j] = +("0x" + c.slice(4, 6));
+      image.data[++j] = 255;
+    }
+
+    context.putImageData(image, 0, 0);
+
+  });
+  //#endregion
+
+</script>
+
+<!--  -->
+<script>
+
+</script>
